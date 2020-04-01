@@ -10,6 +10,8 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
 
+const employees = [];
+
 const inputInfo = [
     {
         type: 'input',
@@ -66,20 +68,44 @@ inquirer.prompt({
     if(answer.Role === 'Manager'){
         inquirer.prompt(inputMan).then((ans) => {
             console.log('manager was chosen');
-            const newManager = new Manager(ans.Name, ans.ID, ans.Email, ans.OfficeNumber)
-            console.log(newManager);
+            const newManager = new Manager(ans.Name, ans.ID, ans.Email, ans.OfficeNumber);
+            employees.push(newManager);
+            another();
         })
     }else if(answer.Role === 'Engineer'){
         inquirer.prompt(inputEng).then((ans) => {
             const newEngineer = new Engineer(ans.Name, ans.ID, ans.Email, ans.GitHub);
-            console.log(newEngineer);
+            employees.push(newEngineer);
+            another();
         })
     }else if(answer.Role === 'Intern'){
         inquirer.prompt(inputIntrn).then((ans) => {
-            const newIntern = new Intern(ans.Name, ans.ID, ans.Email, ans.School)
-            console.log(newIntern)
+            const newIntern = new Intern(ans.Name, ans.ID, ans.Email, ans.School);
+            employees.push(newIntern);
+            another();
+
         })
+    }
+
+    function another(){
+    inquirer.prompt({
+        type: 'confirm',
+        name: "Another",
+        message:"Add another employee?"
+    }).then((answer) =>{
+        if(!(answer.Another)){
+            console.log('Employees:')
+            for(const employee of employees){
+                console.log(employee);
+            }
+            render(employees)
+            fs.writeFileSync(outputPath, render(employees),"utf8");
+        }else{inqFunc()}
+    })
     }
 })
 };
-inqFunc()
+
+inqFunc();
+
+
