@@ -9,6 +9,10 @@ const connection = mysql.createConnection({
     database: "EmployeeTrackerDB"
 });
 
+connection.connect((err) =>{
+    if (err) throw err;
+    inqFunc()
+})
 const dre = ['Department', 'Role', 'Employee'];
 
 const question = [{
@@ -18,59 +22,64 @@ const question = [{
     choices: ['Add', 'View', 'Update', 'Delete']
 }];
 
-
-
-const inputInfo = [
+const inputDep = [
     {
         type: 'input',
-        name: 'Name',
-        message:'Enter First and Last name:',
+        name: 'depName',
+        message: 'Enter Department Name:',
+    },
+];
+
+const inputRole = [
+    {
+        type: 'input',
+        name: 'title',
+        message:'Enter Title:',
     },
 
     {
         type: 'number',
-        name: 'ID',
-        message: 'Enter employee\'s ID:',
+        name: 'salary',
+        message: 'Enter starting salary:',
     },
 
     {
         type: 'input',
-        name: 'Email',
-        message: 'Enter employee\'s Email:',
+        name: 'depID',
+        message: "Enter Department's ID:",
     },
 ];
 
-const inputMan = [
-    ...inputInfo,
+const inputEmp = [
+    {
+        type: 'input',
+        name: 'firstName',
+        message: "Enter Employee's First Name:"
+    },
+    {
+        type: 'input',
+        name: 'lastName',
+        message: "Enter Employee's Last Name:"
+    },
     {
         type: 'number',
-        name: 'OfficeNumber',
-        message: 'Enter Office Number:',
+        name: 'roleID',
+        message: "Enter Employee's Role ID:"
     },
-];
-
-const inputEng = [
-    ...inputInfo,
     {
         type: 'input',
-        name: 'GitHub',
-        message: 'Enter GitHub username:',
+        name: 'managerID',
+        message: "Enter Employee's Manager's ID:"
     },
+
 ];
 
-const inputIntrn = [
-    ...inputInfo,
-    {
-        type: 'input',
-        name: 'School',
-        message: 'Enter Intern\'s school:',
-    },
-];
+
+
 function inqFunc(){
     inquirer.prompt(question).then((answer) => {
         let crudAns = answer.crud
         questionCrud(crudAns);
-
 })
 };
 function another(crudAns, cb){
@@ -87,6 +96,7 @@ function another(crudAns, cb){
             }).then(ans => {
                 if(!(ans.returntoMM)){
                 console.log('Thank you for using Employee Tracker!')
+                connection.end();
                 }else{inqFunc();}
             })
         }else{cb(crudAns);}
@@ -100,92 +110,60 @@ function questionCrud(crudAns) {
         message: `What would would you like to ${crudAns}?`,
         choices:    [...dre]
     }).then(res => {
-        switch (res.addDre){
-            case "Department":
-                console.log('Department was chosen');
+        console.log(`${res.addDre} was chosen`);
+        switch (crudAns){
+            case "Add":
+                    addToTable(crudAns ,res.addDre);
+                break;
+            case "View":
+                break;
+            case "Update":
+                break;
+            case "Delete":
+                break;
+        }
+    })
+};
+
+function addToTable(crudAns, table){
+    switch (table){
+        case 'Department':
+            inquirer.prompt(inputDep).then(res => {
+                connection.query(`INSERT INTO ${table}(name) VALUES ("${res.depName}")`, (err, results) => {
+                    if(err) throw err;
+                    console.log(`${results.affectedRows} items inserted!`);
+                    another(crudAns, questionCrud);
+
+                });
+
+            });
+
+            break;
+        case 'Role':
+            inquirer.prompt(inputRole).then(res => {
+            connection.query(`INSERT INTO ${table}(Title, Salary, Department_ID) VALUES ("${res.title}", ${res.salary}, ${res.depID})`, (err, results) => {
+                if(err) throw err;
+                console.log(`${results.affectedRows} items inserted!`);
                 another(crudAns, questionCrud);
-                break;
-            case "Role":
-                console.log('Role was chosen')
+
+            });
+            });
+            break;
+        case 'Employee':
+            inquirer.prompt(inputEmp).then(res => {
+            connection.query(`INSERT INTO ${table}(First_Name, Last_Name, Role_ID, Manager_ID) VALUES ("${res.firstName}", "${res.lastName}", ${res.roleID}, ${res.managerID || null})`, (err, results) => {
+                if(err) throw err;
+                console.log(`${results.affectedRows} items inserted!`);
                 another(crudAns, questionCrud);
-                break;
-            case "Employee":
-                console.log('Employee was chosen')
-                another(crudAns, questionCrud);
-                break;
-        }
-    })
-};
-/*function questionView() {
-    inquirer.prompt({
-        type:'list',
-        name: 'addDre',
-        message: 'What would would you like to add?',
-        choices:    [...dre]
-    }).then(res => {
-        switch (res.addDre){
-            case "Department":
-                console.log('Department was chosen');
-                another('Add', questionView);
-                break;
-            case "Role":
-                console.log('Role was chosen')
-                another('Add', questionView);
-                break;
-            case "Employee":
-                console.log('Employee was chosen')
-                another('Add', questionView);
-                break;
-        }
-    })
-};
-function questionUpdate() {
-    inquirer.prompt({
-        type:'list',
-        name: 'addDre',
-        message: 'What would would you like to add?',
-        choices:    [...dre]
-    }).then(res => {
-        switch (res.addDre){
-            case "Department":
-                console.log('Department was chosen');
-                another('Add', questionUpdate);
-                break;
-            case "Role":
-                console.log('Role was chosen')
-                another('Add', questionUpdate);
-                break;
-            case "Employee":
-                console.log('Employee was chosen')
-                another('Add', questionUpdate);
-                break;
-        }
-    })
-};
-function questionDelete() {
-    inquirer.prompt({
-        type:'list',
-        name: 'addDre',
-        message: 'What would would you like to add?',
-        choices:    [...dre]
-    }).then(res => {
-        switch (res.addDre){
-            case "Department":
-                console.log('Department was chosen');
-                another('Add', questionDelete);
-                break;
-            case "Role":
-                console.log('Role was chosen')
-                another('Add', questionDelete);
-                break;
-            case "Employee":
-                console.log('Employee was chosen')
-                another('Add', questionDelete);
-                break;
-        }
-    })
-};
+
+            })
+            });
+            break;
+    }
+}
+/*
+scratch area
+
+
+
 */
-inqFunc();
-
-
